@@ -19,7 +19,6 @@ This repo was created from the Nautobot ChatOps Cookiecutter, which provided the
 2. Create the virtual environment with poetry `poetry shell && poetry install && cookiecutter nautobot-app-chatops/`
 3. Fill prompts from cookiecutter
 4. Your template is now generated! You might init a git repo in that directory now (like this one!)
-5. You may have some other things left to do for the "App" that my template is not providing? eg a proper `urls.py` file
 
 
 ## Requirements to use this repo
