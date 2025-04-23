@@ -104,7 +104,7 @@ print(f"Result: {result}")
 
 for md in captured["disp"].sent_markdowns:
     print(md)
-Command /atsu get-prefixes received with filter type 'status' and filter value '0c83cd98-e084-4e17-afd1-2c0c75e60e06'
+# Command /atsu get-prefixes received with filter type 'status' and filter value '0c83cd98-e084-4e17-afd1-2c0c75e60e06'
 # **Showing prefixes filtered by 'status'**
 # | Prefix | Status | Role | Namespace |
 # | --- | --- | --- | --- |
