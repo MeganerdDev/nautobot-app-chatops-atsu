@@ -29,7 +29,7 @@ This repo was created from the Nautobot ChatOps Cookiecutter, which provided the
 
 
 ## Requirements to use this repo
-- >=Python3.9, Poetry, Docker
+- \>\=Python3.9, Poetry, Docker
 
 
 ## How to use this repo
