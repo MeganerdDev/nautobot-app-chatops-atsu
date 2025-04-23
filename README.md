@@ -23,7 +23,7 @@ This repo was created from the Nautobot ChatOps Cookiecutter, which provided the
 
 
 ## Requirements to use this repo
-- \>\=Python3.9, Poetry, Docker
+- \>\=Python3.9, Poetry, Docker (docker-compose)
 
 
 ## How to use this repo
@@ -63,7 +63,7 @@ params = ["status", f"{active_status.pk}"]
 
 User = get_user_model()
 test_user, created = User.objects.get_or_create(
-    username="test", # NOTE: test user needs permissions for this object
+    username="test", # NOTE: test user will need permissions provisioned for the Nautobot objects we query
     defaults={
         "email": "test@example.com",
     }
