@@ -1,0 +1,62 @@
+In [3]: from pkg_resources import UnknownExtra
+   ...: from django.contrib.auth import get_user_model
+   ...: from nautobot.ipam.models import Prefix
+   ...: from nautobot.extras.models import Status
+   ...: from nautobot_chatops.workers import handle_subcommands
+   ...: from nautobot_chatops_atsu import worker
+   ...: from nautobot_chatops_atsu import helpers
+   ...: 
+   ...: status_qs = Status.objects.get_for_model(Prefix)
+   ...: active_status = status_qs.get(name="Active")
+   ...: params = ["status", f"{active_status.pk}"]
+   ...: 
+   ...: User = get_user_model()
+   ...: test_user, created = User.objects.get_or_create(
+   ...:     username="test", # NOTE: test user needs permissions for this object
+   ...:     defaults={
+   ...:         "email": "test@example.com",
+   ...:     }
+   ...: )
+   ...: 
+   ...: context = {
+   ...:     "user": test_user,
+   ...:     "user_name": test_user.username,
+   ...:     "user_id": test_user.pk,
+   ...:     "platform_name": "mock",
+   ...:     "platform_color": "000000",
+   ...:     "command_prefix": "/",
+   ...: }
+   ...: 
+   ...: captured = {}
+   ...: class Capture_Dispatcher(helpers.Mock_Dispatcher):
+   ...:     def __init__(self, context: dict = {}):
+   ...:         super().__init__(context=context)
+   ...:         captured["disp"] = self
+   ...: 
+   ...: try:
+   ...:     result = handle_subcommands(
+   ...:         "atsu",
+   ...:         "get-prefixes",
+   ...:         params,
+   ...:         Capture_Dispatcher,
+   ...:         context,
+   ...:     )
+   ...: except UnknownExtra as exc:
+   ...:     # suppress pkg_resources warning for mock demo
+   ...:     pass
+   ...: except Exception as exc:
+   ...:     # suppress pkg_resources warning for mock demo
+   ...:     pass
+   ...: 
+   ...: print(f"Result: {result}")
+   ...: 
+   ...: for md in captured["disp"].sent_markdowns:
+   ...:     print(md)
+   ...: 
+Result: succeeded
+Command /atsu get-prefixes received with filter type 'status' and filter value '0c83cd98-e084-4e17-afd1-2c0c75e60e06'
+**Showing prefixes filtered by 'status'**
+| Prefix | Status | Role | Namespace |
+| --- | --- | --- | --- |
+| 10.0.0.0/8 | Active |  | Global |
+| 192.168.1.0/24 | Active |  | Global |
