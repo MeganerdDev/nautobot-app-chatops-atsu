@@ -40,7 +40,8 @@ This repo was created from the Nautobot ChatOps Cookiecutter, which provided the
 5. Use invoke task to start the Docker container `invoke start` (allow time for the container to provision database on first spin up)
 6. You should be able to access Nautobot UI at http://127.0.0.1:8080 and login with the admin from creds.env
 7. Under the Admin Panel of Nautobot, provide the 'test' user account permissions to the endpoints. (IPAM, Status, and User objects in this case)
-8. Drop in to one of the Docker containers with a shell, then enter the Nautobot shell (Django shell)
+8. Create some test Prefixes, since there are none in the fresh database instance
+9. Drop in to one of the Docker containers with a shell, then enter the Nautobot shell (Django shell)
 ```bash
 $ docker ps
 CONTAINER ID   IMAGE                                         COMMAND                  CREATED          STATUS                    PORTS                                       NAMES
@@ -52,7 +53,7 @@ e3119c10dc7d   postgres:13-alpine                            "docker-entrypoint.
 $ docker exec -it nautobot-chatops-atsu-nautobot-1 /bin/bash
 root@8e704908ffdd:/source# nautobot-server shell_plus
 ```
-9. Copy the example script from `./development/django-shell-demo.txt` or from below
+10. Copy the example script from `./development/django-shell-demo.txt` or from below
 ```python3
 from pkg_resources import UnknownExtra
 from django.contrib.auth import get_user_model
