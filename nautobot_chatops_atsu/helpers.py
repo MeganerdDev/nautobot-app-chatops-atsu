@@ -1,10 +1,9 @@
 """Helper functions for worker."""
 
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 from django.db.models.query import QuerySet
 from nautobot.ipam.models import Prefix
-#from nautobot.chatops.dispatcher import Dispatcher
 
 
 def send_prefix_table(
@@ -38,7 +37,7 @@ def send_prefix_table(
 def prompt_for_prefix_filter_type(
     action_id: str,
     help_text: str,
-    dispatcher, #: Dispatcher,
+    dispatcher,
 ) -> Any:
     """Prompt the user to select a valid Prefix filter type from a drop-down menu."""
     choices = [
@@ -57,6 +56,7 @@ def prompt_for_prefix_filter_type(
 
 class Mock_Dispatcher:
     """Mock chatops dispatcher for testing get_prefixes without mattermost/slack/teams."""
+
     def __init__(self, context: Dict[str, Any] = {}) -> None:
         self.context = context
         self.user = context.get("user", None)
