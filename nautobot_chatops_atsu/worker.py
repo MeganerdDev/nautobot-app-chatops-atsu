@@ -1,12 +1,14 @@
 """Worker functions implementing Nautobot "atsu" command and subcommands."""
 
-from typing import Union
+from ast import literal_eval
+from typing import Any, Union
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db.models import Count
 from django.utils.text import slugify
+from nautobot.apps.config import get_app_settings_or_config
 from nautobot.circuits.models import Circuit, CircuitTermination, CircuitType, Provider
 from nautobot.dcim.models import Cable, Device, DeviceType, Location, LocationType, Manufacturer, Rack
 from nautobot.dcim.models.device_components import FrontPort, Interface, RearPort
@@ -17,7 +19,8 @@ from nautobot.ipam.choices import PrefixTypeChoices
 from nautobot.ipam.models import Namespace, Prefix, VLAN, VLANGroup, RIR
 from nautobot.tenancy.models import Tenant
 
-from nautobot_chatops.choices import CommandStatusChoices
+from nautobot_chatops.choices import CommandStatusChoices 
+#from nautobot_chatops.constants import CommandStatusChoices
 from nautobot_chatops.workers import handle_subcommands, subcommand_of
 from nautobot_chatops.workers.helper_functions import (
     add_asterisk,
@@ -31,8 +34,9 @@ from nautobot_chatops.workers.helper_functions import (
 ) # pylint: disable=too-many-return-statements,too-many-branches
 
 from nautobot_chatops.workers import subcommand_of, handle_subcommands
+from .api.api import API as AtsuAPI
 from .atsu import NautobotChatopsAtsu
-from .helpers import prompt_for_prefix_filter_type, send_prefix_table
+from .helpers import parse_filters, prompt_for_prefix_filter_type, send_prefix_table
 
 
 EXAMPLE_VAR = settings.PLUGINS_CONFIG["nautobot_chatops_atsu"].get("example_var")
@@ -188,4 +192,82 @@ def get_prefixes(dispatcher, filter_type=None, filter_value=None) -> Union[bool,
         )
     )
     send_prefix_table(dispatcher, prefixes, filter_type)
+    return CommandStatusChoices.STATUS_SUCCEEDED
+
+
+# pylint: disable=too-many-statements
+@subcommand_of("atsu")
+def get_api(
+    dispatcher,
+    endpoint: str | None = None,
+    raw_filters: str | None = None,
+) -> Union[bool, CommandStatusChoices]:
+    """Call Nautobot REST API via PyNautobot, using YAML definitions or raw args.
+
+    Args:
+        dispatcher (Dispatcher): ChatOps dispatcher instance for prompts and output
+        endpoint (Optional[str]): YAML key (filename) or raw API path (e.g. "dcim.devices")
+        raw_filters (Optional[str]): Python-dict string of filter params (e.g. '{"name": "site1"}')
+
+    Returns:
+        bool: False if awaiting user input (prompting)
+        CommandStatusChoices: STATUS_SUCCEEDED or STATUS_FAILED on completion
+    """
+    cfg = get_app_settings_or_config("nautobot_chatops_atsu", {})
+    nautobot_url = cfg.get("nautobot_url")
+    nautobot_token = cfg.get("nautobot_token")
+    if not nautobot_url or not nautobot_token:
+        dispatcher.send_error("Missing 'nautobot_url' or 'nautobot_token' from nautobot_chatops_atsu PLUGINS config.")
+        return CommandStatusChoices.STATUS_FAILED
+
+    api_client = AtsuAPI(
+        url=nautobot_url,
+        token=nautobot_token
+    )
+
+    if not endpoint:
+        choices = [(name, name) for name in api_client.endpoints]
+        choices.append(("raw", "raw"))
+        dispatcher.prompt_from_menu(
+            "atsu get-api",
+            "Select a predefined endpoint or choose 'raw'",
+            choices,
+        )
+        return False
+
+    if endpoint == "raw" and raw_filters is None:
+        dispatcher.send_markdown("Enter the raw endpoint path (e.g. `dcim.devices`):")
+        return False
+
+    if raw_filters is None:
+        dispatcher.send_markdown(f"Using endpoint `{endpoint}`, provide filters as a dict string or leave blank:")
+        return False
+
+    # parse the filter string into a dictionary
+    filters: dict[str, Any] = {}
+    if raw_filters.strip():
+        try:
+            filters = literal_eval(raw_filters)
+        except Exception as exc:
+            dispatcher.send_error(f"Invalid filter dict: {exc}")
+            return CommandStatusChoices.STATUS_FAILED
+
+    # perform the API call
+    if endpoint in api_client.endpoints:
+        dispatcher.send_markdown(f"Querying `{api_client.endpoints[endpoint]['endpoint']}` via YAML definition")
+        result = api_client.action(endpoint)
+    else:
+        dispatcher.send_markdown(f"Querying `{endpoint}` with filters {filters}")
+        nb = api_client.api
+        for part in endpoint.split("."):
+            nb = getattr(nb, part)
+        result = nb.filter(**filters) if filters else nb.all()
+
+    if not result:
+        dispatcher.send_markdown("No results found")
+        return CommandStatusChoices.STATUS_SUCCEEDED
+
+    for obj in result:
+        dispatcher.send_markdown(str(obj))
+
     return CommandStatusChoices.STATUS_SUCCEEDED

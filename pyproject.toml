@@ -30,10 +30,13 @@ include = [
 "atsu" = "nautobot_chatops_atsu.worker:atsu"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"
+python = ">=3.8,~3.11,<3.12"
 # Used for local development
 nautobot = "^2.0.0"
 nautobot-chatops = "^3.0.1"
+pynautobot = "^2.6.2"
+pyyaml = "^6.0.2"
+urllib3 = "^2.4.0"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"

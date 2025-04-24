@@ -1,0 +1,9 @@
+action: <GET/POST/PUT/DELETE>
+endpoint: <API endpoint, eg: devices, sites, etc.>
+data:
+  <field1>: <value1>
+  <field2>: <value2>
+  ...
+filters:
+  <filter_field>: <filter_value>
+

@@ -1,5 +1,9 @@
 """Helper functions for worker."""
 
+import json
+import re
+from typing import Any, Dict
+from json import JSONDecodeError
 from typing import Any, Dict, List, Tuple
 
 from django.db.models.query import QuerySet
@@ -120,3 +124,30 @@ class Capture_Dispatcher(Mock_Dispatcher):
     def __init__(self, context: dict = {}):
         super().__init__(context=context)
         self.captured["disp"] = self
+
+
+def parse_filters(raw: str) -> Dict[str, Any]:
+    """Sanity check the 'filter string' as JSON.
+
+    Raises:
+        ValueError: if parsing fails or the structure isn’t a flat dict of simple types
+    """
+    try:
+        data = json.loads(raw)
+    except JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON for filters: {exc}")
+
+    if not isinstance(data, dict):
+        raise ValueError("Filters must be a JSON object with key/value pairs")
+
+    clean_filters: Dict[str, Any] = {}
+    for key, val in data.items():
+        if not isinstance(key, str):
+            raise ValueError(f"Filter key must be a string, got {type(key).__name__}")
+        if not isinstance(val, (str, int, float, bool)):
+            raise ValueError(f"Filter value for '{key}' must be a str|int|float|bool, got {type(val).__name__}")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(?:__[A-Za-z0-9_]+)*", key):
+            raise ValueError(f"Invalid filter field name: '{key}'")
+        clean_filters[key] = val
+
+    return clean_filters
