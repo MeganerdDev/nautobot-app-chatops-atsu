@@ -1,0 +1,5 @@
+action: GET
+endpoint: dcim.devices
+filters:
+  name: c7200
+

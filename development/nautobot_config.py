@@ -143,5 +143,8 @@ PLUGINS_CONFIG = {
         "microsoft_app_id": os.environ.get("MICROSOFT_APP_ID"),
         "microsoft_app_password": os.environ.get("MICROSOFT_APP_PASSWORD"),
     },
-    "nautobot_chatops_atsu": {"foo": "bar"},  # Example variable
+    "nautobot_chatops_atsu": {
+        "nautobot_url": os.environ.get("NAUTOBOT_URL", "http://127.0.0.1:8080"),
+        "nautobot_token": os.environ.get("NAUTOBOT_TOKEN", "a"*40),
+    }, 
 }
